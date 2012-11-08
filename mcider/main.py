@@ -41,7 +41,7 @@ def main():
         util.fs_writer(output_file, html)
         if args.browser:
             url = 'file://' + output_file
-            if slide.options['theme'] == 'io2012':
+            if slide.options['theme'] == 'io2012' or slide.options['theme'] == 'bnr':
                 url += '?presentme='
                 url += 'true' if args.presenter else 'false'
             webbrowser.open_new_tab(url)

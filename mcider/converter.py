@@ -13,7 +13,7 @@ class Slide():
 
     """ opts
         .themes themes path
-        .theme io2012(default) or io2011
+        .theme io2012(default) or io2011 or bnr
         .contents 
         .extensions extra fenced_code tables, ...
         .clean (boolean, default False)
@@ -59,6 +59,8 @@ class Slide():
             html = self._get_slide_io2011(contents, extensions)
         elif theme == 'io2012':
             html = self._get_slide_io2012(contents, extensions)
+        elif theme == 'bnr':
+            html = self._get_slide_bnr(contents, extensions)
         else:
             html = self._get_slide_none(contents, extensions)
         return html
@@ -78,6 +80,60 @@ class Slide():
             html += slide
             html += '</article>\n\n'
         return html
+
+    def _get_slide_bnr(self, contents=None, extensions=[]):
+        """ bnr style """
+        md = Markdown(extensions=extensions)
+        splits = [
+            {'horizon': '---', 'style': 'none'},
+            {'horizon': '___', 'style': 'smaller'},
+            {'horizon': '***', 'style': 'fill'}
+        ]
+
+        styles = []
+        for split in splits:
+            styles.append(split['style'])
+            horizon = '\n' + split['horizon'] + '\n'
+            contents = contents.replace(horizon, '\n---\n' + split['style'] + '\n')
+
+        pages = contents.split('\n---\n')
+
+        # from pages to slides
+        slides = []
+        for page in pages:
+            sections = page.split('\n\n', 2)
+            slide = {}
+            if not sections[0] in styles:
+                if len(sections) > 2:
+                    sections[1] += '\n\n' + sections[2]
+                sections.insert(0, 'none')
+            slide['style'] = sections[0]
+            if len(sections) > 1:
+                slide['hgroup'] = sections[1]
+            if len(sections) > 2:
+                slide['article'] = sections[2]
+            slides.append(slide)
+
+        # from slides to html
+        html = '\n'
+        for slide in slides:
+            html += '<slide>\n'
+            if slide.has_key('hgroup'):
+                html += '<hgroup>\n'
+                html += md.convert(slide['hgroup']) + '\n'
+                html += '</hgroup>\n'
+            if slide.has_key('article'):
+                html += '<article class="' + slide['style'] + '">\n'
+                html += md.convert(slide['article']) + '\n'
+                html += '</article>\n'
+            html += '</slide>\n\n'
+
+        # from comment out to presener note
+        html = html.replace('\n<!--\n', '\n<aside class="note">\n')
+        html = html.replace('\n-->\n', '\n</aside>\n')
+
+        return html
+
 
     def _get_slide_io2012(self, contents=None, extensions=[]):
         """ io-2012 style """
